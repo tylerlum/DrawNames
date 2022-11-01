@@ -336,8 +336,10 @@ print("Is this a valid assignment? {}".format(is_valid_drawn_names(
 
 # %% id="uELDFFEcqjXS" colab_type="code" colab={"base_uri": "https://localhost:8080/", "height": 69} outputId="624ab317-37b8-4c40-dc05-f237d2b4787e"
 # Setup emails and names
-EMAILS_BY_NAME = {"Tyler": "tylergwlum@gmail.com", 'OtherTyler': "pythoncoderdude@gmail.com"}
-NICKNAMES_BY_NAME = {"Tyler": "Tygertron", 'OtherTyler': 'SwoleDude'}
+EMAILS_BY_NAME = {"Tyler": "tylergwlum@gmail.com",
+                  'OtherTyler': "pythoncoderdude@gmail.com",}
+NICKNAMES_BY_NAME = {"Tyler": "Tygertron",
+                     'OtherTyler': 'SwoleDude',}
 EMAIL_USED_TO_SEND = "pythoncoderdude@gmail.com"
 APP_PASSWORD = input("Enter the app password for {0}".format(EMAIL_USED_TO_SEND))
 NAMES = list(EMAILS_BY_NAME.keys())
