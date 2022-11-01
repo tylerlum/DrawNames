@@ -39,7 +39,7 @@
 
 # %% id="WhL5kNkRm4Km" colab_type="code" colab={}
 import random
-from copy import deepcopy, copy
+from copy import deepcopy
 import smtplib
 import datetime
 
@@ -51,12 +51,9 @@ import datetime
 def remove_name_from_list(name_list, remove_name):
     """Return deep copy of name_list with remove_name removed
 
-    If remove_names not in name_list, returns a deepcopy of name_list
+    If remove_names not in name_list, returns a copy of name_list
     """
-    shortened_list = deepcopy(name_list)
-    if remove_name in shortened_list:
-        shortened_list.remove(remove_name)
-    return shortened_list
+    return [name for name in name_list if name != remove_name]
 
 
 def is_valid_assignment(recipient_by_buyer_list):
@@ -83,10 +80,7 @@ def convert_recipient_by_buyer_list_to_recipients_by_buyer(recipient_by_buyer_li
 
     # Combine the recipients of each buyer
     for buyer in recipient_by_buyer_list[0]:
-        recipients = []
-        for recipient_by_buyer in recipient_by_buyer_list:
-            recipients.append(recipient_by_buyer[buyer])
-        recipients_by_buyer[buyer] = recipients
+        recipients_by_buyer[buyer] = [recipient_by_buyer[buyer] for recipient_by_buyer in recipient_by_buyer_list]
     return recipients_by_buyer
 
 
@@ -114,7 +108,7 @@ def try_draw_names_one_recipient_per_buyer(full_name_list, assignment_dict):
 
     Returns True if successful, otherwise returns False
     """
-    recipient_list = deepcopy(full_name_list)
+    recipient_list = list(full_name_list)
 
     for buyer in full_name_list:
         # If no available recipients, then failed
@@ -176,7 +170,7 @@ def draw_names(full_name_list, recipients_per_buyer):
 
 # %% id="N77u5tKOk1Ic" colab_type="code" colab={}
 ########### Sending Email ##########
-def send_email(TO, SUBJECT, BODY, USER="learningpython640@gmail.com", PASSWORD="ilearnpython"):
+def send_email(TO, SUBJECT, BODY, USER, PASSWORD):
 
     email_text = """\
 From: %s  
@@ -194,8 +188,9 @@ Subject: %s
         server.close()
 
         print("Email sent")
-    except:
+    except Exception as e:
         print("Something went wrong")
+        print(e)
 
 
 # %% [markdown] id="bu1_4XF7oIU1" colab_type="text"
@@ -341,8 +336,10 @@ print("Is this a valid assignment? {}".format(is_valid_drawn_names(
 
 # %% id="uELDFFEcqjXS" colab_type="code" colab={"base_uri": "https://localhost:8080/", "height": 69} outputId="624ab317-37b8-4c40-dc05-f237d2b4787e"
 # Setup emails and names
-EMAILS_BY_NAME = {"Tyler": "tylergwlum@gmail.com", 'ExampleName': "example@email.com"}
-NICKNAMES_BY_NAME = {"Tyler": "Tygertron", 'ExampleName': 'Cookiedude'}
+EMAILS_BY_NAME = {"Tyler": "tylergwlum@gmail.com", 'OtherTyler': "pythoncoderdude@gmail.com"}
+NICKNAMES_BY_NAME = {"Tyler": "Tygertron", 'OtherTyler': 'SwoleDude'}
+EMAIL_USED_TO_SEND = "pythoncoderdude@gmail.com"
+APP_PASSWORD = input("Enter the app password for {0}".format(EMAIL_USED_TO_SEND))
 NAMES = list(EMAILS_BY_NAME.keys())
 RECIPIENTS_PER_BUYER = 1
 
@@ -377,8 +374,12 @@ for buyer in recipients_by_buyer:
     subject = "Sibling Secret Santa Draw {}".format(datetime.datetime.now().year)
 
     print(email_body)
-    send_email([EMAILS_BY_NAME[buyer]], subject, email_body)
+    send_email([EMAILS_BY_NAME[buyer]], subject, email_body, EMAIL_USED_TO_SEND, APP_PASSWORD)
 
 # Send email of actual draw to hidden email
-send_email(["learningpython640@gmail.com"],
-           "Sibling Secret Santa Real List {0}", "{1}".format(datetime.datetime.now().year, recipients_by_buyer))
+send_email(["pythoncoderdude@gmail.com"],
+           "Sibling Secret Santa Real List {0}".format(datetime.datetime.now().year),
+           "{0}".format(recipients_by_buyer),
+           EMAIL_USED_TO_SEND, APP_PASSWORD)
+
+# %%
