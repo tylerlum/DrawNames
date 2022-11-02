@@ -1,16 +1,18 @@
-# DrawNames
+# Draw Names
 
-Customize-able Secret Santa Name List Generator
+Customizable Secret Santa Name List Generator
 
-The purpose of this repository is to
+## Overview
 
-1. Assign buyers and receivers for Secret Santa events. The user can specify the number of presents that each buyer should be buying, and the program will ensure that no buyer draws the same name twice.
+The purpose of this script is to:
 
-2. Send emails to all Secret Santa participants telling them who to buy a present for.
+* Assign each buyer a list of gift receivers for Secret Santa events. The user can specify the number of presents that each buyer should be buying, and the program will ensure that no buyer draws the same name twice.
 
-3. Draw a Christmas tree and include it in the email for festivity. The Christmas tree is a String of the following characters: `[`, `]`, `=`, `~`. 
+* Send emails to all Secret Santa participants telling them who to buy a present for.
 
-__How to Use__: The easiest way to use this code is to use Jupyter Notebook. Then you can customize the email settings and names and then use it!
+* Draw a Christmas tree and include it in the email for festivity. The Christmas tree is a String of the following characters: [, ], =, ~.
+
+To use Draw Names, read the instructions in `Draw_Names.ipynb`.
 
 An example of what the email would look like:
 

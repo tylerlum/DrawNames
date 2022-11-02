@@ -19,18 +19,27 @@
 # %% [markdown] id="SbXNYzQ1nBZw" colab_type="text"
 # # Draw Names
 #
-# Customize-able Secret Santa Name List Generator
+# Customizable Secret Santa Name List Generator
+#
+# ## Overview
 #
 # The purpose of this script is to:
 #
-# * Assign buyers and receivers for Secret Santa events. The user can specify the number of presents that each buyer should be buying, and the program will ensure that no buyer draws the same name twice.
+# * Assign each buyer a list of gift receivers for Secret Santa events. The user can specify the number of presents that each buyer should be buying, and the program will ensure that no buyer draws the same name twice.
 #
 # * Send emails to all Secret Santa participants telling them who to buy a present for.
 #
 # * Draw a Christmas tree and include it in the email for festivity. The Christmas tree is a String of the following characters: [, ], =, ~.
 #
+# ## How To Use
 #
-# How to Use: The easiest way to use this code is to use Jupyter Notebook or Google Colab notebook. Then you can customize the email settings and names and then run all!
+# * The easiest way to use this code is to use a Jupyter Notebook on a local machine (may encounter issues sending emails from a Google Colab notebook).
+#
+# * Then you can customize `NAME_TO_EMAIL_DICT` and `NAME_TO_NICKNAME_DICT` to have the emails and nicknames you want (make sure they all have the same real names).
+#
+# * Next, you will need to have an email used to send the gift assignments out. If this is a gmail account, this account will need an app password, as gmail has updated its security guidelines. Instructions to get an app password can be found [here](https://support.google.com/mail/answer/185833?hl=en-GB) or by searching "Sign in using app passwords" on Google.
+#
+# * Lastly, run all cells and input the email and app password when prompted.
 
 # %% [markdown] id="Gr8bZSVpm-Ru" colab_type="text"
 # ## Dependencies and Functions
@@ -63,56 +72,66 @@ def is_valid_assignment(buyer_to_recipient_dicts):
     return True
 
 
-def convert_key_to_val_dicts_into_key_to_vals_dict(buyer_to_recipient_dicts):
-    """convert_key_to_val_dicts_into_key_to_vals_dict
-    list(dict(key, val)) => dict(key, list(vals))
-
-    Requires: buyer_to_recipient_dicts not empty
+def convert_key_to_val_dicts_into_key_to_vals_dict(key_to_val_dicts):
     """
-    # Setup final dict and first assignment
-    buyer_to_recipients_dict = {}
+    convert_key_to_val_dicts_into_key_to_vals_dict
+    list(dict(key, val)) => dict(key, list(vals))
+    """
+    # Empty list => empty dict
+    if len(key_to_val_dicts) == 0:
+        return {}
 
-    # Combine the recipients of each buyer
-    first_buyer_to_recipient_dict = buyer_to_recipient_dicts[0]
-    buyers = list(first_buyer_to_recipient_dict.keys())
-    for buyer in buyers:
-        buyer_to_recipients_dict[buyer] = [buyer_to_recipient_dict[buyer]
-                                           for buyer_to_recipient_dict in buyer_to_recipient_dicts]
-    return buyer_to_recipients_dict
+    # Ensure that all dicts have the same keys
+    keys = list(key_to_val_dicts[0].keys())
+    for key_to_val_dict in key_to_val_dicts:
+        assert(set(keys) == set(key_to_val_dict.keys()))
+
+    # Create new dict
+    key_to_vals_dict = {}
+    for key in keys:
+        key_to_vals_dict[key] = [key_to_val_dict[key]
+                                 for key_to_val_dict in key_to_val_dicts]
+    return key_to_vals_dict
 
 
-def get_one_new_recipient_per_buyer(buyer_to_recipient_dicts, full_name_list):
+def add_one_new_recipient_per_buyer(buyer_to_recipient_dicts, full_name_list):
     """Create a new buyer_to_recipient_dict, with no repeats.
 
     No repeats means that a buyer won't buy for the same person more than once
     """
-    while(True):
+    MAX_NUM_TRIES = 1000
+    for _ in range(MAX_NUM_TRIES):
+        # Create new dict
         new_buyer_to_recipient_dict = draw_names_one_recipient_per_buyer(full_name_list)
+
+        # Check if it worked
         new_buyer_to_recipient_dicts = deepcopy(buyer_to_recipient_dicts)
         new_buyer_to_recipient_dicts.append(new_buyer_to_recipient_dict)
         if (is_valid_assignment(new_buyer_to_recipient_dicts)):
-            return new_buyer_to_recipient_dict
+            # Worked, add to list
+            buyer_to_recipient_dicts.append(new_buyer_to_recipient_dict)
+            return
+
+    raise ValueError("Unable to add one new recipient per buyer after {0} tries".format(MAX_NUM_TRIES))
 
 
 # %% [markdown] id="FPmEjmktnaqF" colab_type="text"
 # ### High Level Functions for Drawing Names
 
 # %% id="I5fefJkXndPJ" colab_type="code" colab={}
-def try_draw_names_one_recipient_per_buyer(full_name_list, assignment_dict):
+def try_draw_names_one_recipient_per_buyer(full_name_list):
     """Try to assign each buyer one recipient
 
-    Modifies assignment_dict
-
-    Returns True if successful, otherwise returns False
+    Returns empty dict if unsuccessful
     """
     recipient_list = list(full_name_list)
+    assignment_dict = {}
 
     for buyer in full_name_list:
         # If no available recipients, then failed
         available_recipients = [name for name in recipient_list if name != buyer]
         if (len(available_recipients) == 0):
-            assignment_dict = {}
-            return False
+            return {}
 
         # Get random available recipient
         recipient = random.choice(available_recipients)
@@ -122,15 +141,14 @@ def try_draw_names_one_recipient_per_buyer(full_name_list, assignment_dict):
 
         # Add buyer -> recipient pair
         assignment_dict[buyer] = recipient
-    return True
+    return assignment_dict
 
 
 def draw_names_one_recipient_per_buyer(full_name_list):
     """Assign each buyer one recipient"""
-    success = False
-    while (not success):
-        assignment_dict = {}
-        success = try_draw_names_one_recipient_per_buyer(full_name_list, assignment_dict)
+    assignment_dict = {}
+    while len(assignment_dict) == 0:
+        assignment_dict = try_draw_names_one_recipient_per_buyer(full_name_list)
     return assignment_dict
 
 
@@ -153,8 +171,7 @@ def draw_names(full_name_list, recipients_per_buyer):
     # Continuously draw names, getting one more recipient per buyer each loop
     buyer_to_recipient_dicts = []
     while (len(buyer_to_recipient_dicts) < recipients_per_buyer):
-        buyer_to_recipient_dict = get_one_new_recipient_per_buyer(buyer_to_recipient_dicts, full_name_list)
-        buyer_to_recipient_dicts.append(buyer_to_recipient_dict)
+        add_one_new_recipient_per_buyer(buyer_to_recipient_dicts, full_name_list)
 
     # Put Assignments together
     buyer_to_recipients_dict = convert_key_to_val_dicts_into_key_to_vals_dict(buyer_to_recipient_dicts)
@@ -207,7 +224,8 @@ def make_tree(n, s):
             if i == n-1:
                 reduce_length = reduce_length + 1
                 if reduce_length % 2 == 0:
-                    tree = tree + "_"
+                    # tree = tree + "_"  # This leads to inconsistent sizing in some emails
+                    tree = tree + "~"
             else:
                 reduce_length = reduce_length + 1
                 if reduce_length % 2 == 0:
@@ -247,7 +265,7 @@ def is_valid_drawn_names(buyer_to_recipients_dict, recipients_per_buyer):
 
 
 def buyer_has_unique_recipients(buyer_to_recipients_dict):
-    for buyer, recipients in buyer_to_recipients_dict.items():
+    for recipients in buyer_to_recipients_dict.values():
         if any(recipients.count(recipient) > 1 for recipient in recipients):
             return False
     return True
@@ -257,7 +275,7 @@ def each_person_gets_equal_number_of_gifts(buyer_to_recipients_dict, recipients_
     names = buyer_to_recipients_dict.keys()
     for name in names:
         num_gifts = 0
-        for buyer, recipients in buyer_to_recipients_dict.items():
+        for recipients in buyer_to_recipients_dict.values():
             if name in recipients:
                 num_gifts += 1
         if not num_gifts == recipients_per_buyer:
@@ -266,7 +284,7 @@ def each_person_gets_equal_number_of_gifts(buyer_to_recipients_dict, recipients_
 
 
 def each_buyer_buys_correct_number_of_gifts(buyer_to_recipients_dict, recipients_per_buyer):
-    for buyer, recipients in buyer_to_recipients_dict.items():
+    for recipients in buyer_to_recipients_dict.values():
         if not len(recipients) == recipients_per_buyer:
             return False
     return True
@@ -329,8 +347,8 @@ NAME_TO_EMAIL_DICT = {"Tyler": "tylergwlum@gmail.com",
                       'OtherTyler': "pythoncoderdude@gmail.com", }
 NAME_TO_NICKNAME_DICT = {"Tyler": "Tygertron",
                          'OtherTyler': 'SwoleDude', }
-EMAIL_USED_TO_SEND = "pythoncoderdude@gmail.com"
-APP_PASSWORD = input("Enter the app password for {0}".format(EMAIL_USED_TO_SEND))
+EMAIL_USED_TO_SEND = input("Enter the email address you will use to send gift assignments: ")
+APP_PASSWORD = input("Enter the app password for {0}: ".format(EMAIL_USED_TO_SEND))
 NAMES = list(NAME_TO_EMAIL_DICT.keys())
 RECIPIENTS_PER_BUYER = 1
 
@@ -367,8 +385,8 @@ for buyer in buyer_to_recipients_dict:
     print(email_body)
     send_email([NAME_TO_EMAIL_DICT[buyer]], subject, email_body, EMAIL_USED_TO_SEND, APP_PASSWORD)
 
-# Send email of actual draw to hidden email
-send_email(["pythoncoderdude@gmail.com"],
+# Send email of actual draw to email used to send
+send_email([EMAIL_USED_TO_SEND],
            "Sibling Secret Santa Real List {0}".format(datetime.datetime.now().year),
            "{0}".format(buyer_to_recipients_dict),
            EMAIL_USED_TO_SEND, APP_PASSWORD)
