@@ -1,5 +1,5 @@
 import random
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 def try_draw_names_one_recipient_per_buyer(full_name_list: List[str]) -> Dict[str, str]:
@@ -66,7 +66,7 @@ def add_one_new_recipient_per_buyer(
 
 
 def draw_names(
-    full_name_list: List[str], n_recipients_per_buyer: int
+    full_name_list: List[str], n_recipients_per_buyer: int, seed: Optional[int] = None,
 ) -> Dict[str, List[str]]:
     """Assign each buyer n distinct recipients (n = n_recipients_per_buyer)
 
@@ -74,6 +74,7 @@ def draw_names(
 
     Requires n > 0
     """
+    random.seed(seed)
 
     # Check valid input
     if not 0 < n_recipients_per_buyer < len(full_name_list):
